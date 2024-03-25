@@ -1,28 +1,32 @@
 import requests
 import json, re, os
 from pathlib import Path
+from .modules import *
+
+modules = [megakino, cinemathek]
 
 
 class PiracyCDN:
-    def __getModules(self) -> dict:
+    def __getModuleIdentifiers(self) -> dict:
         retObj = []
-        for file in os.listdir(str(Path(__file__).parent.absolute()) + "/modules"):
-            if file.endswith(".module.py") and file != "example.module.py":
-                retObj.append(file)
+        for module in modules:
+            retObj.append(module.SITE_IDENTIFIER)
+        return retObj
+
+    def __getModuleNames(self) -> dict:
+        retObj = []
+        for module in modules:
+            retObj.append(module.SITE_NAME)
         return retObj
 
     def __init__(self):
         self.version = "0.0.1"
-        self.modules = self.__getModules()
+        self.moduleIdentifiers = self.__getModuleIdentifiers()
+        self.moduleName = self.__getModuleNames()
+        self.modules = modules
 
     def searchTitle(title: str) -> list:
-        pass
-
-    def getTitleInfo(movieId: int) -> dict:
-        pass
-
-    def getVideoInfo(movieId: int) -> dict:
-        pass
-
-    def getAudioInfo(movieId: int) -> dict:
-        pass
+        retObj = []
+        for module in self.modules:
+            retObj.append(module.search(title))
+        return retObj
