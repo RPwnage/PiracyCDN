@@ -45,21 +45,6 @@ def search(title: str) -> list:
                 title, originalTitle=dOriginalTitle, poster=poster, provider=SITE_NAME
             )
         )
-        # responseJSON["results"].append(
-        #     {
-        #         "title": str(title),
-        #         "originalTitle": str(dOriginalTitle),
-        #         "shortDescription": str(shortDescription),
-        #         "description": str(dDescription),
-        #         "dateCreated": str(dDateCreated),
-        #         "countryOfOrigin": str(dCountryOfOrigin),
-        #         "poster": str(poster),
-        #         "recommendedAge": str(dRecommendedAge),
-        #         "movieDeeplink": str(movieDeeplink),
-        #         "type": str(dMediaType),
-        #         "provider": "megakino",
-        #     }
-        # )
 
     return response
 
