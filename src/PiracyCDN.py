@@ -25,7 +25,7 @@ class PiracyCDN:
         self.moduleName = self.__getModuleNames()
         self.modules = modules
 
-    def searchTitle(title: str) -> list:
+    def searchTitle(self, title: str) -> list:
         retObj = []
         for module in self.modules:
             retObj.append(module.search(title))

@@ -1,4 +1,5 @@
 from src.PiracyCDN import PiracyCDN
 
 piracy = PiracyCDN()
-print(piracy.modules)
+movie = piracy.searchTitle("Star Wars")
+print(movie)
