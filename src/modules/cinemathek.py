@@ -1,11 +1,18 @@
 import requests
 import urllib.parse
 from bs4 import BeautifulSoup
-from ..Movie import Movie
 import logging
+import sys
+
+sys.path.append(".")
+from .Movie import Movie
 
 SITE_IDENTIFIER = "cinemathek"
 SITE_NAME = "Cinemathek"
+
+
+def fetchDataFromDeeplink(url: str) -> dict:
+    pass
 
 
 def search(title: str) -> list:
@@ -14,7 +21,7 @@ def search(title: str) -> list:
         "https://cinemathek.net/?s=" + str(urllib.parse.quote_plus(title.lower()))
     )
     soup = BeautifulSoup(res.text, "html.parser")
-    responseElements = soup.findAll("a", class_="poster")
+    responseElements = soup.findAll("div", class_="result-item")
     response = []
     for responseElement in responseElements:
         elemSoup = BeautifulSoup(str(responseElement), "html.parser")
@@ -34,11 +41,16 @@ def search(title: str) -> list:
 
         response.append(
             Movie(
-                title, originalTitle=dOriginalTitle, poster=poster, provider=SITE_NAME
+                title,
+                originalTitle=dOriginalTitle,
+                shortDescription=shortDescription,
+                description=dDescription,
+                poster=poster,
+                provider=SITE_NAME,
             )
         )
 
-    return []
+    return response
 
 
 def showEpisodes(titleId: int) -> list:
@@ -47,3 +59,6 @@ def showEpisodes(titleId: int) -> list:
 
 def showSeasons(titleId: int) -> list:
     pass
+
+
+print(search("Star Wars"))

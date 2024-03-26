@@ -6,6 +6,10 @@ SITE_IDENTIFIER = "megakino"
 SITE_NAME = "Megakino"
 
 
+def fetchDataFromDeeplink(url: str) -> dict:
+    pass
+
+
 def search(title: str) -> list:
     res = requests.get(
         "https://megakino.co/index.php?do=search&subaction=search&story="
@@ -42,7 +46,12 @@ def search(title: str) -> list:
 
         response.append(
             Movie(
-                title, originalTitle=dOriginalTitle, poster=poster, provider=SITE_NAME
+                title,
+                originalTitle=dOriginalTitle,
+                shortDescription=shortDescription,
+                description=dDescription,
+                poster=poster,
+                provider=SITE_NAME,
             )
         )
 
