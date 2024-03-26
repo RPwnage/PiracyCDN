@@ -1,15 +1,21 @@
-import requests
-import urllib.parse
+import urllib.parse, logging, requests
 from bs4 import BeautifulSoup
-import logging
+from multiprocessing.pool import ThreadPool
 from ..Movie import Movie
 
 SITE_IDENTIFIER = "cinemathek"
 SITE_NAME = "Cinemathek"
 
 
-def fetchDataFromDeeplink(url: str) -> dict:
-    pass
+def __fetchDataFromDeeplink(url: str) -> dict:
+    dRes = requests.get(str(url))
+    dSoup = BeautifulSoup(dRes.text, "html.parser")
+    dDescription = str((dSoup.find("div", class_="wp-content").findAll("p")[0]).text)
+    dOriginalTitle = str((dSoup.findAll("span", class_="valor")[0]).text)
+    return [
+        dOriginalTitle,
+        dDescription,
+    ]
 
 
 def search(title: str) -> list:
@@ -19,35 +25,43 @@ def search(title: str) -> list:
     )
     soup = BeautifulSoup(res.text, "html.parser")
     responseElements = soup.findAll("div", class_="result-item")
-    response = []
+    movieDeeplinks = list()
+    movieData = list()
+    movieDeeplinkData = list()
+    retObj = list()
+    pool = ThreadPool(processes=int(len(responseElements) + 1))
+    async_result = list()
     for responseElement in responseElements:
         elemSoup = BeautifulSoup(str(responseElement), "html.parser")
         title = str((elemSoup.find("div", class_="title")).text)
         shortDescription = str((elemSoup.find("div", class_="contenido")).text)
-        posterMaintag = elemSoup.find("div", class_="thumbnail")
-        poster = posterMaintag.find("img")["src"]
-        movieDeeplink = posterMaintag.find("a")["href"]
-
-        # Fetch data from deeplink
-        dRes = requests.get(str(movieDeeplink))
-        dSoup = BeautifulSoup(dRes.text, "html.parser")
-        dDescription = str(
-            (dSoup.find("div", class_="wp-content").findAll("p")[0]).text
+        poster = elemSoup.find("div", class_="thumbnail").find("img")["src"]
+        movieData.append([title, shortDescription, poster])
+        movieDeeplinks.append(
+            elemSoup.find("div", class_="thumbnail").find("a")["href"]
         )
-        dOriginalTitle = str((dSoup.findAll("span", class_="valor")[0]).text)
 
-        response.append(
+    for movieDeeplink in movieDeeplinks:
+        async_result.append(
+            pool.apply_async(__fetchDataFromDeeplink, (str(movieDeeplink),))
+        )
+
+    for index, result in enumerate(async_result):
+        movieDeeplinkData.append(result.get())
+
+    for index, movie in enumerate(movieData):
+        retObj.append(
             Movie(
-                title,
-                originalTitle=dOriginalTitle,
-                shortDescription=shortDescription,
-                description=dDescription,
-                poster=poster,
+                title=movie[0],
+                originalTitle=movieDeeplinkData[index][0],
+                shortDescription=movie[1],
+                description=movieDeeplinkData[index][1],
+                poster=movie[2],
                 provider=SITE_NAME,
             )
         )
 
-    return response
+    return retObj
 
 
 def showEpisodes(titleId: int) -> list:
