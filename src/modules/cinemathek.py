@@ -19,7 +19,7 @@ def __fetchDataFromDeeplink(url: str) -> dict:
 
 
 def search(title: str) -> list:
-    logging.debug(f"[{SITE_NAME}]Searching for {title}")
+    logging.info(f"[{SITE_NAME}]\tSearching for {title}")
     res = requests.get(
         "https://cinemathek.net/?s=" + str(urllib.parse.quote_plus(title.lower()))
     )
@@ -42,6 +42,9 @@ def search(title: str) -> list:
         )
 
     for movieDeeplink in movieDeeplinks:
+        logging.info(
+            f"[{SITE_NAME}]\tAdding Thread for Deeplink request ({movieDeeplink})"
+        )
         async_result.append(
             pool.apply_async(__fetchDataFromDeeplink, (str(movieDeeplink),))
         )

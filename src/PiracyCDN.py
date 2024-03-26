@@ -18,6 +18,24 @@ def flatten(list):
 
 
 class PiracyCDN:
+    """
+    This class provides a unified interface for searching for media content on various piracy websites.
+    It uses a plug-in system, where each plug-in implements a specific website and provides the search functionality.
+    The plug-ins are stored in a list, and are accessed using their site identifiers.
+    The search method takes a search query, and returns a list of results.
+
+    Example usage:
+
+    ```
+    from PiracyCDN import PiracyCDN
+    cdn = PiracyCDN()
+    results = cdn.search("Spider-Man: No Way Home")
+    for result in results:
+        print(result)
+    ```
+
+    """
+
     def __getModuleIdentifiers(self) -> dict:
         retObj = []
         for module in modules:
@@ -37,6 +55,15 @@ class PiracyCDN:
         self.modules = modules
 
     def searchTitle(self, title: str) -> list:
+        """
+        Searches for a media title on all the plug-in websites.
+
+        Parameters:
+            title (str): The media title to search for
+
+        Returns:
+            list: A list of search results
+        """
         # Create threads to fasten up the search process
         pool = ThreadPool(processes=2)
         retObj = []

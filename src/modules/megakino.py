@@ -1,25 +1,43 @@
-import requests
+import requests, logging
 from ..Movie import Movie
 from bs4 import BeautifulSoup
 from multiprocessing.pool import ThreadPool
 
+from ..hosters import *
+
+HOSTERS = [voe]
 
 SITE_IDENTIFIER = "megakino"
 SITE_NAME = "Megakino"
 
 
 def __fetchDataFromDeeplink(url: str) -> dict:
-    dRes = requests.get(str(url))
-    dSoup = BeautifulSoup(dRes.text, "html.parser")
-    dDescription = str((dSoup.find("div", class_="page__text")).text)
-    if dSoup.find("span", itemprop="dateCreated") is not None:
-        dDateCreated = str((dSoup.find("span", itemprop="dateCreated")).text)
-    dOriginalTitle = str((dSoup.find("div", class_="pmovie__original-title")).text)[1:]
+    res = requests.get(str(url))
+    soup = BeautifulSoup(res.text, "html.parser")
+    description = str((soup.find("div", class_="page__text")).text)
+    if soup.find("span", itemprop="dateCreated") is not None:
+        dateCreated = str((soup.find("span", itemprop="dateCreated")).text)
+    originalTitle = str((soup.find("div", class_="pmovie__original-title")).text)[1:]
+    mediaType = str((soup.find("div", class_="pmovie__genres")).text).split(" ")[0]
+    streams = list()
+    hosters = soup.findAll("iframe")
 
-    return [dOriginalTitle, dDescription]
+    # Check if the media type is a Movie
+    if "Serien" not in mediaType:
+        for dHoster in hosters:
+            if dHoster.has_attr("data-src"):
+                # Exclude Youtube videos
+                if "youtube" not in dHoster["data-src"]:
+                    # Pick the hoster for the given stream
+                    for hoster in HOSTERS:
+                        if hoster.HOSTER_IDENTIFIER in dHoster["data-src"]:
+                            streams.append(hoster.extractStream(dHoster["data-src"]))
+
+    return [originalTitle, description, streams]
 
 
 def search(title: str) -> list:
+    logging.info(f"[{SITE_NAME}]\tSearching for {title}")
     res = requests.get(
         "https://megakino.co/index.php?do=search&subaction=search&story="
         + title.lower()
@@ -38,11 +56,12 @@ def search(title: str) -> list:
         shortDescription = str((elemSoup.find("div", class_="poster__text")).text)
         poster = str("https://megakino.co/" + (elemSoup.find("img"))["data-src"])
         movieData.append([title, shortDescription, poster])
-        movieDeeplinks.append(
-            elemSoup.find("div", class_="thumbnail").find("a")["href"]
-        )
+        movieDeeplinks.append(elemSoup.find("a", class_="poster")["href"])
 
     for movieDeeplink in movieDeeplinks:
+        logging.info(
+            f"[{SITE_NAME}]\tAdding Thread for Deeplink request ({movieDeeplink})"
+        )
         async_result.append(
             pool.apply_async(__fetchDataFromDeeplink, (str(movieDeeplink),))
         )
@@ -59,6 +78,7 @@ def search(title: str) -> list:
                 description=movieDeeplinkData[index][1],
                 poster=movie[2],
                 provider=SITE_NAME,
+                streams=movieDeeplinkData[index][2],
             )
         )
 
