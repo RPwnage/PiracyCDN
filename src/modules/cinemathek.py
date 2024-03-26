@@ -2,10 +2,7 @@ import requests
 import urllib.parse
 from bs4 import BeautifulSoup
 import logging
-import sys
-
-sys.path.append(".")
-from .Movie import Movie
+from ..Movie import Movie
 
 SITE_IDENTIFIER = "cinemathek"
 SITE_NAME = "Cinemathek"
@@ -59,6 +56,3 @@ def showEpisodes(titleId: int) -> list:
 
 def showSeasons(titleId: int) -> list:
     pass
-
-
-print(search("Star Wars"))
