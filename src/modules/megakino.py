@@ -5,7 +5,7 @@ from multiprocessing.pool import ThreadPool
 
 from ..hosters import *
 
-HOSTERS = [voe]
+HOSTERS = [voe, doodstream]
 
 SITE_IDENTIFIER = "megakino"
 SITE_NAME = "Megakino"
