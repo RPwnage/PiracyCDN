@@ -6,7 +6,6 @@ from multiprocessing.pool import ThreadPool
 from ..hosters import *
 
 HOSTERS = [voe, doodstream, gxplayer]
-
 SITE_IDENTIFIER = "megakino"
 SITE_NAME = "Megakino"
 
@@ -44,9 +43,9 @@ def search(title: str) -> list:
     )
     soup = BeautifulSoup(res.text, "html.parser")
     responseElements = soup.findAll("a", class_="poster")
-    movieDeeplinks = list()
-    movieData = list()
-    movieDeeplinkData = list()
+    mediaDeeplinks = list()
+    mediaData = list()
+    mediaDeeplinkData = list()
     retObj = list()
     pool = ThreadPool(processes=int(len(responseElements) + 1))
     async_result = list()
@@ -55,30 +54,30 @@ def search(title: str) -> list:
         title = str((elemSoup.find("h3", class_="poster__title")).text)
         shortDescription = str((elemSoup.find("div", class_="poster__text")).text)
         poster = str("https://megakino.co/" + (elemSoup.find("img"))["data-src"])
-        movieData.append([title, shortDescription, poster])
-        movieDeeplinks.append(elemSoup.find("a", class_="poster")["href"])
+        mediaData.append([title, shortDescription, poster])
+        mediaDeeplinks.append(elemSoup.find("a", class_="poster")["href"])
 
-    for movieDeeplink in movieDeeplinks:
+    for mediaDeeplink in mediaDeeplinks:
         logging.info(
-            f"[{SITE_NAME}]\tAdding Thread for Deeplink request ({movieDeeplink})"
+            f"[{SITE_NAME}]\tAdding Thread for Deeplink request ({mediaDeeplink})"
         )
         async_result.append(
-            pool.apply_async(__fetchDataFromDeeplink, (str(movieDeeplink),))
+            pool.apply_async(__fetchDataFromDeeplink, (str(mediaDeeplink),))
         )
 
     for index, result in enumerate(async_result):
-        movieDeeplinkData.append(result.get())
+        mediaDeeplinkData.append(result.get())
 
-    for index, movie in enumerate(movieData):
+    for index, media in enumerate(mediaData):
         retObj.append(
             Movie(
-                title=movie[0],
-                originalTitle=movieDeeplinkData[index][0],
-                shortDescription=movie[1],
-                description=movieDeeplinkData[index][1],
-                poster=movie[2],
+                title=media[0],
+                originalTitle=mediaDeeplinkData[index][0],
+                shortDescription=media[1],
+                description=mediaDeeplinkData[index][1],
+                poster=media[2],
                 provider=SITE_NAME,
-                streams=movieDeeplinkData[index][2],
+                streams=mediaDeeplinkData[index][2],
             )
         )
 

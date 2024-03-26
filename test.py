@@ -3,5 +3,5 @@ import logging
 
 logging.basicConfig(level=logging.INFO)
 piracy = PiracyCDN()
-movie = piracy.searchTitle("Star Wars")
+movie = piracy.searchTitle("The Mandalorian")
 print(movie)
