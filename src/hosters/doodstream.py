@@ -2,7 +2,7 @@ import requests, re, cloudscraper, math, random, time, brotli, random, gzip, log
 from bs4 import BeautifulSoup
 
 HOSTER_IDENTIFIER = "dood.re"
-HOSTER_NAME = "Dood.re"
+HOSTER_NAME = "Dood"
 
 
 def __makePlay(token):
@@ -19,13 +19,17 @@ def extractStream(url: str):
     streamReq = scraper.get(url)
     soup = BeautifulSoup(streamReq.text, "html.parser")
 
-    try:
-        extractedToken = re.search("cookieIndex='(.*)';function", streamReq.text).group(
-            1
+    if (
+        "video you are looking for is not found" in streamReq.text
+        or streamReq.status_code > 400
+    ):
+        logging.info(
+            f"[{HOSTER_NAME}]\tFailed to extract token from {url} (link seems to be dead)"
         )
-    except AttributeError:
-        logging.info(f"[{HOSTER_NAME}]\tFailed to extract token from {url}")
         return None
+
+    extractedToken = re.search("cookieIndex='(.*)';function", streamReq.text).group(1)
+
     # Todo: replace with regex
     exctractedPassedMD5 = streamReq.text[
         (streamReq.text).find("'/pass_md5/")
