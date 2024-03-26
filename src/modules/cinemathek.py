@@ -2,12 +2,14 @@ import requests
 import urllib.parse
 from bs4 import BeautifulSoup
 from ..Movie import Movie
+import logging
 
 SITE_IDENTIFIER = "cinemathek"
 SITE_NAME = "Cinemathek"
 
 
 def search(title: str) -> list:
+    logging.debug(f"[{SITE_NAME}]Searching for {title}")
     res = requests.get(
         "https://cinemathek.net/?s=" + str(urllib.parse.quote_plus(title.lower()))
     )
@@ -36,7 +38,7 @@ def search(title: str) -> list:
             )
         )
 
-    return response
+    return []
 
 
 def showEpisodes(titleId: int) -> list:
