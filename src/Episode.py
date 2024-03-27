@@ -1,4 +1,4 @@
 class Episode:
-    def __init__(self, title: str):
+    def __init__(self, title: str, description: str = None):
         self.title = title
-        pass
+        self.description = description if description is not None else None

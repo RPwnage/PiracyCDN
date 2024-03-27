@@ -20,6 +20,8 @@ def __fetchDataFromDeeplink(url: str) -> dict:
     mediaType = str((soup.find("div", class_="pmovie__genres")).text).split(" ")[0]
     streams = list()
     hosters = soup.findAll("iframe")
+    pool = ThreadPool(processes=int(len(hosters) + 1))
+    async_result = list()
 
     # Check if the media type is a Movie
     if "Serien" not in mediaType:
@@ -30,7 +32,14 @@ def __fetchDataFromDeeplink(url: str) -> dict:
                     # Pick the hoster for the given stream
                     for hoster in HOSTERS:
                         if hoster.HOSTER_IDENTIFIER in dHoster["data-src"]:
-                            streams.append(hoster.extractStream(dHoster["data-src"]))
+                            async_result.append(
+                                pool.apply_async(
+                                    hoster.extractStream, (str(dHoster["data-src"]),)
+                                )
+                            )
+
+    for index, result in enumerate(async_result):
+        streams.append(result.get())
 
     return [originalTitle, description, streams]
 
