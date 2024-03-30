@@ -1,6 +1,7 @@
-import urllib.parse, logging, requests, re
+import urllib.parse, logging, requests, re, json
 from bs4 import BeautifulSoup
 from multiprocessing.pool import ThreadPool, ApplyResult
+import numpy as np
 from ..Movie import Movie
 from ..Episode import Episode
 from ..Series import Series
@@ -18,7 +19,20 @@ def __fetchDataFromEpisode(url: str) -> dict:
     soup = BeautifulSoup(res.text, "html.parser")
     description = str((soup.find("div", class_="wp-content")).find("p").text)
     title = str((soup.find("h3", class_="epih3")).text)
-    return {"description": description, "title": title}
+    season = int(
+        re.search(": (.*)x", str((soup.find("h1", class_="epih1")).text)).group(1)
+    )
+    episode = int(
+        re.search(
+            (f"{season}x(.*)"), str((soup.find("h1", class_="epih1")).text)
+        ).group(1)
+    )
+    return {
+        "description": description,
+        "title": title,
+        "season": season,
+        "episode": episode,
+    }
 
 
 def __fetchDataFromDeeplink(url: str) -> dict:
@@ -69,15 +83,23 @@ def __fetchDataFromDeeplink(url: str) -> dict:
             for index, results in enumerate(episodeResults[indexO]):
                 if type(results) == ApplyResult:
                     episodeResults[indexO][index] = results.get()
-                if type(results) != ApplyResult and type(results) != Episode:
-                    episodeResults[indexO][index] = Episode(
-                        episodeResults[indexO][index]["title"],
-                        episodeResults[indexO][index]["description"],
-                    )
 
-        for indexO, season in enumerate(seasons):
-            for index, episode in enumerate(episodeResults[indexO]):
-                seasons[indexO][index] = episode
+        episodes_list = []
+        for item in episodeResults[0]:
+            season = item["season"]
+            episode = item["episode"]
+            title = item["title"]
+            description = item["description"]
+            if len(episodes_list) < season:
+                episodes_list.append([])
+            if len(episodes_list[season - 1]) < episode:
+                episodes_list[season - 1].append(None)
+            episodes_list[season - 1][episode - 1] = Episode(
+                title=title,
+                description=description,
+            )
+
+        seasons = episodes_list
 
     if streamLinks != [] and ">Episodes<" not in res.text:
         # If there is movie data, just get the streams
