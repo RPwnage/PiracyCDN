@@ -15,9 +15,20 @@ SITE_NAME = "Cinemathek"
 
 def __fetchDataFromEpisode(url: str) -> dict:
     logging.info(f"Fetching episode data from {url}")
+    streamLinks = list()
+
     res = requests.get(str(url))
     soup = BeautifulSoup(res.text, "html.parser")
     description = str((soup.find("div", class_="wp-content")).find("p").text)
+    mediaId = int(soup.find("link", {"rel": "shortlink"})["href"].split("?p=")[1])
+    for index in range(50):
+        resJ = requests.get(
+            f"https://cinemathek.net/wp-json/dooplayer/v2/{mediaId}/movie/{index + 1}"
+        ).json()
+        if resJ["embed_url"] == None:
+            break
+        else:
+            streamLinks.append(resJ["embed_url"])
     title = str((soup.find("h3", class_="epih3")).text)
     season = int(
         re.search(": (.*)x", str((soup.find("h1", class_="epih1")).text)).group(1)
@@ -32,6 +43,7 @@ def __fetchDataFromEpisode(url: str) -> dict:
         "title": title,
         "season": season,
         "episode": episode,
+        "streams": streamLinks,
     }
 
 
@@ -90,6 +102,7 @@ def __fetchDataFromDeeplink(url: str) -> dict:
             episode = item["episode"]
             title = item["title"]
             description = item["description"]
+            streams = item["streams"]
             if len(episodes_list) < season:
                 episodes_list.append([])
             if len(episodes_list[season - 1]) < episode:
@@ -97,6 +110,8 @@ def __fetchDataFromDeeplink(url: str) -> dict:
             episodes_list[season - 1][episode - 1] = Episode(
                 title=title,
                 description=description,
+                streams=streams,
+                provider=SITE_NAME,
             )
 
         seasons = episodes_list
