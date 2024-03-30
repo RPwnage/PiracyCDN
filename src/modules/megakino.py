@@ -1,8 +1,8 @@
 import requests, logging
-from ..Movie import Movie
 from bs4 import BeautifulSoup
 from multiprocessing.pool import ThreadPool
 
+from ..Movie import Movie
 from ..hosters import *
 
 HOSTERS = [voe, doodstream, gxplayer]
@@ -74,7 +74,7 @@ def search(title: str) -> list:
             pool.apply_async(__fetchDataFromDeeplink, (str(mediaDeeplink),))
         )
 
-    for index, result in enumerate(async_result):
+    for result in async_result:
         mediaDeeplinkData.append(result.get())
 
     for index, media in enumerate(mediaData):

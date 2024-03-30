@@ -5,7 +5,7 @@ from .modules import *
 from multiprocessing.pool import ThreadPool
 from collections.abc import Iterable
 
-modules = [megakino, cinemathek]
+modules = [megakino, cinemathek, filmkiste]
 
 
 def flatten(list):
@@ -50,16 +50,16 @@ class PiracyCDN:
 
     def __init__(self):
         self.version = "0.0.1"
-        self.moduleIdentifiers = self.__getModuleIdentifiers()
-        self.moduleNames = self.__getModuleNames()
+        self.providers = self.__getModuleIdentifiers()
         self.modules = modules
 
-    def searchTitle(self, title: str) -> list:
+    def searchTitle(self, title: str, provider: str = None) -> list:
         """
         Searches for a media title on all the plug-in websites.
 
         Parameters:
             title (str): The media title to search for
+            provider (str): The site identifier of the website to use for the search
 
         Returns:
             list: A list of search results
@@ -69,7 +69,10 @@ class PiracyCDN:
         retObj = []
         async_result = list()
         for index, module in enumerate(self.modules):
-            async_result.append(pool.apply_async(module.search, (str(title),)))
+            if provider != None and module.SITE_IDENTIFIER == provider:
+                async_result.append(pool.apply_async(module.search, (str(title),)))
+            elif provider == None:
+                async_result.append(pool.apply_async(module.search, (str(title),)))
 
         for result in async_result:
             retObj.append(result.get())

@@ -14,9 +14,11 @@ SITE_NAME = "Cinemathek"
 
 
 def __fetchDataFromEpisode(url: str) -> dict:
-    logging.info(f"Fetching episode data from {url}")
+    logging.info(f"[{SITE_NAME}]\tFetching episode data from {url}")
     streamLinks = list()
-
+    streams = list()
+    async_result = list()
+    pool = ThreadPool()
     res = requests.get(str(url))
     soup = BeautifulSoup(res.text, "html.parser")
     description = str((soup.find("div", class_="wp-content")).find("p").text)
@@ -29,6 +31,18 @@ def __fetchDataFromEpisode(url: str) -> dict:
             break
         else:
             streamLinks.append(resJ["embed_url"])
+
+    if streamLinks != []:
+        for streamLink in streamLinks:
+            for hoster in HOSTERS:
+                if hoster.HOSTER_IDENTIFIER in streamLink:
+                    async_result.append(
+                        pool.apply_async(hoster.extractStream, (str(streamLink),))
+                    )
+
+        for result in async_result:
+            streams.append(result.get())
+
     title = str((soup.find("h3", class_="epih3")).text)
     season = int(
         re.search(": (.*)x", str((soup.find("h1", class_="epih1")).text)).group(1)
@@ -43,7 +57,7 @@ def __fetchDataFromEpisode(url: str) -> dict:
         "title": title,
         "season": season,
         "episode": episode,
-        "streams": streamLinks,
+        "streams": streams,
     }
 
 
