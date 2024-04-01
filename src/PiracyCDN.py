@@ -65,6 +65,7 @@ class PiracyCDN:
             list: A list of search results
         """
         # Create threads to fasten up the search process
+        title = title.lower()
         pool = ThreadPool(processes=2)
         retObj = []
         async_result = list()
